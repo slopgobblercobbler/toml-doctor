@@ -1,5 +1,6 @@
 # toml-doctor
 
+[![Live Web App](https://img.shields.io/badge/Live%20App-GitHub%20Pages-success?logo=github&style=flat)](https://slopgobblercobbler.github.io/toml-doctor/)
 [![CI](https://github.com/slopgobblercobbler/toml-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/slopgobblercobbler/toml-doctor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](pyproject.toml)

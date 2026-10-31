@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOML Doctor — Client-Side TOML 1.0 Validator, PEP 518/621 Sorter & Health Auditor</title>
+  <meta name="description" content="In-browser client-side TOML 1.0 validator, PEP 518/PEP 621 pyproject.toml auditor, Cargo.toml manifest linter, duplicate detector, and canonical table sorter.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">📄</div>
+      <div>
+        <div class="brand-title">
+          TOML Doctor
+          <span class="brand-badge">Client-Side · In-Browser</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="https://github.com/slopgobblercobbler/toml-doctor" target="_blank" rel="noopener noreferrer" class="header-btn">
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/>
+        </svg>
+        GitHub Repository
+      </a>
+    </div>
+  </header>
+
+  <!-- Toolbar / Presets -->
+  <div class="toolbar-container">
+    <div class="preset-buttons">
+      <span class="toolbar-label">Sample Presets:</span>
+      <button class="btn-preset active" id="preset-pyproject" data-preset="PYPROJECT_STANDARD">
+        🐍 pyproject.toml
+      </button>
+      <button class="btn-preset" id="preset-cargo" data-preset="CARGO_WORKSPACE">
+        🦀 Cargo.toml
+      </button>
+      <button class="btn-preset" id="preset-broken" data-preset="BROKEN_DUPLICATES">
+        ⚠️ Broken & Duplicates
+      </button>
+      <button class="btn-preset" id="preset-unsorted" data-preset="UNSORTED_MESSY">
+        🔀 Unsorted Manifest
+      </button>
+    </div>
+
+    <div class="editor-actions">
+      <button class="action-btn action-btn-accent" id="btn-sort-format" title="Sort sections canonically and format spacing">
+        ⚡ Sort & Format
+      </button>
+      <label for="file-upload" class="action-btn" title="Upload local TOML file">
+        📁 Open File...
+        <input type="file" id="file-upload" accept=".toml" style="display:none">
+      </label>
+      <button class="action-btn" id="btn-clear" title="Clear current editor">
+        🧹 Clear
+      </button>
+      <button class="action-btn" id="btn-copy-toml" title="Copy TOML text">
+        📋 Copy TOML
+      </button>
+      <button class="action-btn action-btn-primary" id="btn-export-file" title="Export clean TOML file">
+        💾 Export File
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Dual Workspace -->
+  <main class="main-workspace">
+    
+    <!-- Left Pane: Editor -->
+    <section class="editor-pane">
+      <div class="pane-header">
+        <span class="pane-title">
+          <span>📝 TOML Document Editor</span>
+        </span>
+        <span id="editor-meta" style="font-size:0.75rem; color:var(--text-muted);">Live Diagnostics Active</span>
+      </div>
+
+      <div class="editor-wrapper" id="editor-drop-zone">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea 
+          id="toml-editor" 
+          class="toml-textarea" 
+          placeholder="# Paste your TOML configuration or pyproject.toml here..."
+          spellcheck="false"
+        ></textarea>
+      </div>
+
+      <div class="editor-footer">
+        <span id="editor-stats">Lines: 0 · Chars: 0</span>
+        <span>Drag & drop .toml files anywhere</span>
+      </div>
+    </section>
+
+    <!-- Right Pane: Audit Dashboard -->
+    <section class="audit-pane">
+      <div class="pane-header">
+        <span class="pane-title">
+          <span>🩺 TOML 1.0 Health & Schema Audit</span>
+        </span>
+        <span id="audit-status" style="font-size:0.75rem; color:var(--color-info);">Analyzed</span>
+      </div>
+
+      <div class="dashboard-content">
+        
+        <!-- Score Card -->
+        <div class="score-card" id="score-card">
+          <div class="score-info">
+            <div class="score-title" id="score-title">TOML Health Score</div>
+            <div class="score-description" id="score-description">
+              Auditing syntax validity, key and table duplicates, PEP 518/621 requirements, and canonical section ordering.
+            </div>
+          </div>
+          <div class="score-gauge-wrapper">
+            <div class="score-circle" id="score-circle" style="--score-pct: 100; --score-color: #3fb950;">
+              <div class="score-circle-inner">
+                <span class="score-value" id="score-value">100</span>
+                <span class="score-grade" id="score-grade">A+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Document Type</span>
+            <div class="metric-val" id="metric-manifest">pyproject.toml</div>
+            <span class="metric-badge" id="metric-manifest-badge" style="background:rgba(88,166,255,0.15); color:#58a6ff;">Standard</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Tables</span>
+            <div class="metric-val" id="metric-tables">6</div>
+            <span class="metric-badge" id="metric-tables-badge" style="background:rgba(63,185,80,0.15); color:#3fb950;">No Collisions</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Keys</span>
+            <div class="metric-val" id="metric-keys">21</div>
+            <span class="metric-badge" id="metric-keys-badge" style="background:rgba(63,185,80,0.15); color:#3fb950;">Unique</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Ordering</span>
+            <div class="metric-val" id="metric-ordering">Canonical</div>
+            <span class="metric-badge" id="metric-ordering-badge" style="background:rgba(63,185,80,0.15); color:#3fb950;">PEP 518/621</span>
+          </div>
+        </div>
+
+        <!-- View Tabs -->
+        <div class="view-tabs">
+          <button class="tab-btn active" id="tab-diagnostics" data-tab="diagnostics">Diagnostics & Issues</button>
+          <button class="tab-btn" id="tab-tree" data-tab="tree">Table Hierarchy Tree</button>
+        </div>
+
+        <!-- Filter Bar (Diagnostics View) -->
+        <div class="filter-bar" id="filter-bar-container">
+          <div class="filter-pills" id="filter-pills">
+            <button class="filter-pill active" data-filter="all">All <span class="filter-count" id="count-all">0</span></button>
+            <button class="filter-pill" data-filter="error">Errors <span class="filter-count" id="count-error">0</span></button>
+            <button class="filter-pill" data-filter="warning">Warnings <span class="filter-count" id="count-warning">0</span></button>
+            <button class="filter-pill" data-filter="info">Info <span class="filter-count" id="count-info">0</span></button>
+          </div>
+        </div>
+
+        <!-- Findings List -->
+        <div class="findings-container" id="findings-container">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Tree View Container -->
+        <div class="tree-container" id="tree-container">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Toast -->
+  <div class="toast-notice" id="toast-notice">Copied to clipboard!</div>
+
+  <!-- Scripts -->
+  <script src="js/toml_auditor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
